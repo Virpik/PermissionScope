@@ -157,7 +157,10 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
 		
         // Set up main view
         view.frame = UIScreen.main.bounds
-        view.autoresizingMask = [UIViewAutoresizing.flexibleHeight, UIViewAutoresizing.flexibleWidth]
+        view.autoresizingMask = [
+            UIView.AutoresizingMask.flexibleHeight,
+            UIView.AutoresizingMask.flexibleWidth
+        ]
         view.backgroundColor = UIColor(red:0, green:0, blue:0, alpha:0.7)
         view.addSubview(baseView)
         // Base View
@@ -413,6 +416,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             }
         case .notDetermined:
             return .unknown
+        @unknown default:
+            return .unknown
         }
     }
 
@@ -459,6 +464,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             return .unauthorized
         case .notDetermined:
             return .unknown
+        @unknown default:
+            return .unknown
         }
     }
 
@@ -500,6 +507,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
                 return .unauthorized
             case .notDetermined:
                 return .unknown
+            @unknown default:
+                return .unknown
             }
         } else {
             // Fallback on earlier versions
@@ -510,6 +519,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             case .restricted, .denied:
                 return .unauthorized
             case .notDetermined:
+                return .unknown
+            @unknown default:
                 return .unknown
             }
         }
@@ -569,17 +580,17 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     This function is called when we want to show the notifications
     alert, kicking off the entire process.
     */
-    func showingNotificationPermission() {
+    @objc func showingNotificationPermission() {
         let notifCenter = NotificationCenter.default
         
         notifCenter
             .removeObserver(self,
-                            name: NSNotification.Name.UIApplicationWillResignActive,
+                            name: UIApplication.willResignActiveNotification,
                             object: nil)
         notifCenter
             .addObserver(self,
                          selector: #selector(finishedShowingNotificationPermission),
-                         name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
+                         name: UIApplication.didBecomeActiveNotification, object: nil)
         notificationTimer?.invalidate()
     }
     
@@ -596,12 +607,13 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     See `showingNotificationPermission` for a more detailed description
     of the entire process.
     */
+    @objc
     func finishedShowingNotificationPermission () {
         NotificationCenter.default.removeObserver(self,
-            name: NSNotification.Name.UIApplicationWillResignActive,
+                                                  name: UIApplication.willResignActiveNotification,
             object: nil)
         NotificationCenter.default.removeObserver(self,
-            name: NSNotification.Name.UIApplicationDidBecomeActive,
+                                                  name: UIApplication.didBecomeActiveNotification,
             object: nil)
         
         notificationTimer?.invalidate()
@@ -636,7 +648,12 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
                 .first { $0 is NotificationsPermission } as? NotificationsPermission
             let notificationsPermissionSet = notificationsPermission?.notificationCategories
 
-            NotificationCenter.default.addObserver(self, selector: #selector(showingNotificationPermission), name: NSNotification.Name.UIApplicationWillResignActive, object: nil)
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(showingNotificationPermission),
+                name: UIApplication.willResignActiveNotification,
+                object: nil
+            )
             
             notificationTimer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(finishedShowingNotificationPermission), userInfo: nil, repeats: false)
             
@@ -661,7 +678,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     - returns: Permission status for the requested type.
     */
     public func statusMicrophone() -> PermissionStatus {
-        let recordPermission = AVAudioSession.sharedInstance().recordPermission()
+        let recordPermission = AVAudioSession.sharedInstance().recordPermission
         switch recordPermission {
         case AVAudioSessionRecordPermission.denied:
             return .unauthorized
@@ -699,13 +716,15 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     - returns: Permission status for the requested type.
     */
     public func statusCamera() -> PermissionStatus {
-        let status = AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeVideo)
+        let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
         switch status {
         case .authorized:
             return .authorized
         case .restricted, .denied:
             return .unauthorized
         case .notDetermined:
+            return .unknown
+        @unknown default:
             return .unknown
         }
     }
@@ -717,7 +736,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         let status = statusCamera()
         switch status {
         case .unknown:
-            AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeVideo,
+            AVCaptureDevice.requestAccess(for: AVMediaType.video,
                 completionHandler: { granted in
                     self.detectAndCallback()
             })
@@ -745,6 +764,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         case .denied, .restricted:
             return .unauthorized
         case .notDetermined:
+            return .unknown
+        @unknown default:
             return .unknown
         }
     }
@@ -784,6 +805,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             return .unauthorized
         case .notDetermined:
             return .unknown
+        @unknown default:
+            return .unknown
         }
     }
     
@@ -820,6 +843,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         case .restricted, .denied:
             return .unauthorized
         case .notDetermined:
+            return .unknown
+        @unknown default:
             return .unknown
         }
     }
@@ -1119,7 +1144,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     /**
     Called when the users taps on the close button.
     */
-    func cancel() {
+    @objc func cancel() {
         self.hide()
         
         if let onCancel = onCancel {
@@ -1151,9 +1176,14 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         alert.addAction(UIAlertAction(title: "Show me".localized,
             style: .default,
             handler: { action in
-                NotificationCenter.default.addObserver(self, selector: #selector(self.appForegroundedAfterSettings), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
+                NotificationCenter.default.addObserver(
+                    self,
+                    selector: #selector(self.appForegroundedAfterSettings),
+                    name: UIApplication.didBecomeActiveNotification,
+                    object: nil
+                )
                 
-                let settingsUrl = URL(string: UIApplicationOpenSettingsURLString)
+                let settingsUrl = URL(string: UIApplication.openSettingsURLString)
                 UIApplication.shared.openURL(settingsUrl!)
         }))
         
@@ -1185,9 +1215,13 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         alert.addAction(UIAlertAction(title: "Show me".localized,
             style: .default,
             handler: { action in
-                NotificationCenter.default.addObserver(self, selector: #selector(self.appForegroundedAfterSettings), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
-                
-                let settingsUrl = URL(string: UIApplicationOpenSettingsURLString)
+                NotificationCenter.default.addObserver(
+                    self,
+                    selector: #selector(self.appForegroundedAfterSettings),
+                    name: UIApplication.didBecomeActiveNotification,
+                    object: nil
+                )
+                let settingsUrl = URL(string: UIApplication.openSettingsURLString)
                 UIApplication.shared.openURL(settingsUrl!)
         }))
         
@@ -1205,8 +1239,9 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     button to check on a disabled permission. It calls detectAndCallback
     to recheck all the permissions and update the UI.
     */
+    @objc
     func appForegroundedAfterSettings() {
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
         
         detectAndCallback()
     }

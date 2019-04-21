@@ -21,11 +21,11 @@
     // Do any additional setup after loading the view, typically from a nib.
     self.singlePscope = [[PermissionScope alloc]init];
     self.multiPscope = [[PermissionScope alloc]init];
-    
-    [self.singlePscope addPermission:[[NotificationsPermission alloc]initWithNotificationCategories:nil] message:@"We use this to send you\r\nspam and love notes"];
+
+    [self.singlePscope addPermission:[[NotificationsPermission alloc] initWithNotificationCategories:nil] message:@"We use this to send you\r\nspam and love notes"];
     
     [self.multiPscope addPermission:[[ContactsPermission alloc]init] message:@"We use this to steal\r\nyour friends"];
-    [self.multiPscope addPermission:[[NotificationsPermission alloc]initWithNotificationCategories:nil] message:@"We use this to send you\r\nspam and love notes"];
+    [self.multiPscope addPermission:[[NotificationsPermission alloc] initWithNotificationCategories:nil] message:@"We use this to send you\r\nspam and love notes"];
     [self.multiPscope addPermission:[[LocationWhileInUsePermission alloc]init] message:@"We use this to track\r\nwhere you live"];
 //    [self.multiPscope addPermission:[[BluetoothPermission alloc]init] message:@"We use this to drain your battery"];
 //    [self.multiPscope addPermission:[[MotionPermission alloc]init] message:@"We use this to detect if you are\r\nThe Flash"];
